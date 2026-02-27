@@ -1,10 +1,13 @@
 from fastapi import HTTPException
+from config import config
+
 
 def parse_bearer_token(authorization: str) -> tuple[str, str, str]:
+
     # check if header exists at all
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
-    
+
     # check if it starts with "Bearer "
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid Authorization format")
@@ -19,7 +22,14 @@ def parse_bearer_token(authorization: str) -> tuple[str, str, str]:
         raise HTTPException(status_code=401, detail="Invalid token format")
 
     access_code = parts[0]
-    env = parts[1]      
+    env = parts[1]
     user_id = parts[2]
+
+    # check env from token matches a known environment in config
+    if env not in config.env_routing:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Unknown environment '{env}'"
+        )
 
     return access_code, env, user_id

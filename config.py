@@ -1,14 +1,11 @@
 from pydantic_settings import BaseSettings
-
-class Settings(BaseSettings):
+ 
+class Config(BaseSettings):
     listen_port: int = 8090
     npjwi_timeout: int = 25
-    npjwi_base_url: str = "https://npka-npjwi-dev.inago.com/nextgen/evaluation"
+    npjwi_base_url: str = "/evaluation"
     env_routing: dict = {
-        "dev": "https://npka-npjwi-dev.inago.com/nextgen/evaluation",
+        "dev": "http://192.168.123.82:9000",
     }
-
-    class Config:
-        env_file = ".env"
-
-settings = Settings()
+ 
+config = Config()

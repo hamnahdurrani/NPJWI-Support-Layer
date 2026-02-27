@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Header, HTTPException
 import httpx
 
-from config import settings
+from config import config
 from model import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -19,10 +19,13 @@ async def chat_completions(
     request: ChatCompletionRequest,
     authorization: str = Header(None)
 ):
-    access_code, env, user_id = parse_bearer_token(authorization)
+    if not request or not request.messages:
+        raise HTTPException(status_code=400, detail="Request body is empty or missing messages")
 
-    if not request.messages or not request.messages[0].content:
-        raise HTTPException(status_code=400, detail="Missing or empty message content")
+    if not request.messages[0].content or not request.messages[0].content.strip():
+        raise HTTPException(status_code=400, detail="Message content is empty")
+
+    access_code, env, user_id = parse_bearer_token(authorization)
 
     eval_request = build_evaluation_request(
         access_code=access_code,
@@ -30,11 +33,11 @@ async def chat_completions(
         question=request.messages[0].content
     )
 
-    # Route to correct NPJWI URL based on env
-    npjwi_url = settings.env_routing.get(env, settings.npjwi_base_url)
+    base_url = config.env_routing.get(env, "")
+    npjwi_url = f"{base_url}{config.npjwi_base_url}"
 
-    # POST to NPJWI
-    async with httpx.AsyncClient(timeout=settings.npjwi_timeout) as client:
+    #POST to NPJWI
+    async with httpx.AsyncClient(timeout=config.npjwi_timeout) as client:
         try:
             response = await client.post(
                 npjwi_url,
@@ -52,7 +55,7 @@ async def chat_completions(
 
         except httpx.RequestError:
             raise HTTPException(status_code=502, detail="NPJWI is unreachable")
-     # To extract message from agent response
+
     answer = await extract_visual_response(response.json())
 
     return ChatCompletionResponse(
