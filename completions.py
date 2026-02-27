@@ -53,7 +53,7 @@ async def chat_completions(
         except httpx.RequestError:
             raise HTTPException(status_code=502, detail="NPJWI is unreachable")
      # To extract message from agent response
-    answer = extract_visual_response(response.json())
+    answer = await extract_visual_response(response.json())
 
     return ChatCompletionResponse(
         choices=[

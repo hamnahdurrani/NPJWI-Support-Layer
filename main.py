@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import completions
+import completions
 
 app = FastAPI(title="Support Layer")
 
